@@ -28,15 +28,12 @@ const SearchResult = props => {
   } = props
 
   const { query } = useRuntime()
-  const settings = useMemo(
-    () => ({
-      hiddenFacets,
-      pagination,
-      mobileLayout,
-      trackingId,
-    }),
-    [hiddenFacets, mobileLayout, pagination, trackingId]
-  )
+  const settings = {
+    hiddenFacets,
+    pagination,
+    mobileLayout,
+    trackingId,
+  };
 
   const fieldsFromQueryString = {
     mapField: query.map,
@@ -49,9 +46,14 @@ const SearchResult = props => {
 
   return !searchQuery || (querySchema && querySchema.enableCustomQuery) ? (
     <LocalQuery
-      {...props}
-      {...querySchema}
-      {...(areFieldsFromQueryStringValid ? fieldsFromQueryString : {})}
+    querySchema={querySchema}
+    searchQuery={searchQuery}
+    hiddenFacets={hiddenFacets}
+    pagination={pagination}
+    mobileLayout={mobileLayout}
+    trackingId={trackingId}
+    mapField={areFieldsFromQueryStringValid ? fieldsFromQueryString.mapField : null}
+    queryField={areFieldsFromQueryStringValid ? fieldsFromQueryString.queryField : null}
       render={localQueryProps => (
         <SearchPageContext.Provider
           value={{ searchQuery: localQueryProps.searchQuery }}

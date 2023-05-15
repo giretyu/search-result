@@ -9,6 +9,9 @@ const LAZY_RENDER_THRESHOLD = 3
 const AvailableFilters = ({ filters = [], ...props }) => {
   const [lastOpenFilter, setLastOpenFilter] = useState()
 
+
+
+  console.log(filters, " ===== filters ==== ")
   return filters.map((filter, i) => (
     <Filter
       filter={filter}

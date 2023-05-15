@@ -22,7 +22,7 @@ In your theme `manifest.json`, add the Search Result app as a dependency:
 
 ```json
   "dependencies": {
-    "vtex.search-result": "3.x"
+    "thefoschini.search-result": "3.x"
   }
 ```
 

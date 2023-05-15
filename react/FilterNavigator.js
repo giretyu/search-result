@@ -1,6 +1,6 @@
 import classNames from 'classnames'
 import PropTypes from 'prop-types'
-import React, { useMemo, Fragment, useState, useEffect } from 'react'
+import React, { useMemo, Fragment, useState, useEffect, useCallback } from 'react'
 import ContentLoader from 'react-content-loader'
 import { ExtensionPoint } from 'vtex.render-runtime'
 import { useDevice } from 'vtex.device-detector'
@@ -114,68 +114,83 @@ const FilterNavigator = ({
     DRAWER_DIRECTION_MOBILE[drawerDirectionMobile] ??
     DRAWER_DIRECTION_MOBILE.drawerLeft
 
-  useEffect(() => {
-    // This condition confirms if there are facets that still need fetching
-    const needsFetching = !!filters.find(
-      filter => filter.quantity > filter.facets.length
-    )
 
-    if (truncatedFacetsFetched && needsFetching && !loading) {
-      filtersFetchMore({
-        variables: {
-          from: FACETS_RENDER_THRESHOLD,
-          to: undefined, // to the end of the results
+    const handleUpdateQuery = useCallback((prevResult, { fetchMoreResult }) => {
+      if (!prevResult || !fetchMoreResult) {
+        return
+      }
+    
+      const prevFacets = prevResult.facets.facets
+      const newFacets = fetchMoreResult.facets.facets
+      const fullFacets = []
+    
+      for (let i = 0; i < prevFacets.length; i++) {
+        const completeFacets = [
+          ...prevFacets[i].facets,
+          ...newFacets[i].facets,
+        ]
+    
+        fullFacets.push({
+          ...prevFacets[i],
+          facets: completeFacets,
+        })
+      }
+    
+      return {
+        facets: {
+          ...prevResult.facets,
+          facets: fullFacets,
         },
-        updateQuery: (prevResult, { fetchMoreResult }) => {
-          if (!prevResult || !fetchMoreResult) {
-            return
-          }
+      }
+    }, [])
+    
+    // useEffect(() => {
+    //   // This condition confirms if there are facets that still need fetching
+    //   const needsFetching = !!filters.find(
+    //     filter => filter.quantity > filter.facets.length
+    //   )
+    
+    //   if (truncatedFacetsFetched && needsFetching && !loading) {
+    //     filtersFetchMore({
+    //       variables: {
+    //         from: FACETS_RENDER_THRESHOLD,
+    //         to: undefined, // to the end of the results
+    //       },
+    //       updateQuery: handleUpdateQuery,
+    //     })
+    //   }
+    // }, [filters, filtersFetchMore, truncatedFacetsFetched, loading, handleUpdateQuery])
 
-          const prevFacets = prevResult.facets.facets
-          const newFacets = fetchMoreResult.facets.facets
-          const fullFacets = []
 
-          for (let i = 0; i < prevFacets.length; i++) {
-            const completeFacets = [
-              ...prevFacets[i].facets,
-              ...newFacets[i].facets,
-            ]
-
-            fullFacets.push({
-              ...prevFacets[i],
-              facets: completeFacets,
-            })
-          }
-
-          return {
-            facets: {
-              ...prevResult.facets,
-              facets: fullFacets,
-            },
-          }
-        },
-      })
-    }
-  }, [filters, filtersFetchMore, truncatedFacetsFetched, loading])
+  const createNamedFacet = (() => {
+    let lastTitle;
+    let lastNamedFacet;
+  
+    return (facet, title) => {
+      if (title === lastTitle) {
+        return { ...lastNamedFacet, ...facet };
+      } else {
+        const namedFacet = newNamedFacet({ ...facet, title });
+        lastTitle = title;
+        lastNamedFacet = namedFacet;
+        return namedFacet;
+      }
+    };
+  })();
 
   const selectedFilters = useMemo(() => {
     const options = [
-      ...specificationFilters.map(filter => {
-        return filter.facets.map(facet => {
-          return {
-            ...newNamedFacet({ ...facet, title: filter.name }),
-            hidden: filter.hidden,
-          }
-        })
-      }),
+      ...specificationFilters.flatMap(filter =>
+        filter.facets.map(facet =>
+          createNamedFacet({ hidden: filter.hidden }, filter.name)
+        )
+      ),
       ...brands,
       ...priceRanges,
-    ]
-
-    return flatten(options)
-  }, [brands, priceRanges, specificationFilters]).filter(
-    facet => facet.selected
-  )
+    ];
+  
+    return options.filter(facet => facet.selected);
+  }, [brands, priceRanges, specificationFilters]);
 
   const { searchQuery } = useSearchPage()
   const hasFiltersApplied = searchQuery?.variables?.selectedFacets?.length > 1
@@ -275,7 +290,7 @@ const FilterNavigator = ({
               maxItemsCategory={maxItemsCategory}
               categoryFiltersMode={categoryFiltersMode}
             />
-            <AvailableFilters
+            {/* <AvailableFilters
               filters={filters}
               priceRange={priceRange}
               preventRouteChange={preventRouteChange}
@@ -290,7 +305,7 @@ const FilterNavigator = ({
               showClearByFilter={showClearByFilter}
               priceRangeLayout={priceRangeLayout}
               scrollToTop={scrollToTop}
-            />
+            /> */}
             {showClearAllFiltersOnDesktop && hasFiltersApplied && (
               <div
                 className={`${applyModifiers(
