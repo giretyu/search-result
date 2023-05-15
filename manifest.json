@@ -1,7 +1,7 @@
 {
   "vendor": "thefoschini",
   "name": "search-result",
-  "version": "3.122.1",
+  "version": "3.122.2-beta.0",
   "title": "VTEX Search Result",
   "description": "A search result wrapper component",
   "mustUpdateAt": "2019-04-25",
